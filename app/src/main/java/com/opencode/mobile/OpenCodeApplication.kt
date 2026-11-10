@@ -4,8 +4,10 @@ import android.app.Application
 import android.content.Context
 import com.opencode.mobile.data.AttachmentStore
 import com.opencode.mobile.data.ConversationStore
+import com.opencode.mobile.data.ModelCatalogRepository
 import com.opencode.mobile.data.SettingsStore
 import com.opencode.mobile.network.ChatClient
+import com.opencode.mobile.network.ModelCatalogClient
 import com.opencode.mobile.network.ShellTool
 import com.opencode.mobile.network.UsageClient
 import com.opencode.mobile.network.WebSearchClient
@@ -18,6 +20,7 @@ class AppContainer(context: Context) {
     val usageClient = UsageClient()
     val webSearchClient = WebSearchClient()
     val shellTool = ShellTool(context)
+    val modelCatalog = ModelCatalogRepository(context, settingsStore, ModelCatalogClient())
 }
 
 class OpenCodeApplication : Application() {

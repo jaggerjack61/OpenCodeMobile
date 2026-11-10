@@ -56,6 +56,12 @@ fun OpenCodeRoot(
         if (stack.size > 1) stack.removeAt(stack.lastIndex)
     }
 
+    fun openSettings() {
+        // Chats change the model and effort for new chats, so always show what is stored.
+        settingsViewModel.reload()
+        push(Screen.Settings)
+    }
+
     BackHandler(enabled = stack.size > 1) { pop() }
 
     LaunchedEffect(current) {
@@ -69,7 +75,7 @@ fun OpenCodeRoot(
             onOpenChat = { id -> push(Screen.Chat(conversationId = id, key = id)) },
             onDeleteChat = listViewModel::delete,
             onOpenUsage = { push(Screen.Usage) },
-            onOpenSettings = { push(Screen.Settings) },
+            onOpenSettings = ::openSettings,
         )
 
         is Screen.Chat -> {
@@ -85,7 +91,7 @@ fun OpenCodeRoot(
                 hasApiKey = hasApiKey,
                 onBack = ::pop,
                 onOpenUsage = { push(Screen.Usage) },
-                onOpenSettings = { push(Screen.Settings) },
+                onOpenSettings = ::openSettings,
                 onDeleted = {
                     pop()
                     listViewModel.refresh()
@@ -98,7 +104,7 @@ fun OpenCodeRoot(
             UsageScreen(
                 viewModel = usageViewModel,
                 onBack = ::pop,
-                onOpenSettings = { push(Screen.Settings) },
+                onOpenSettings = ::openSettings,
             )
         }
 

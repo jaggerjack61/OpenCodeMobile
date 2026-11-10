@@ -29,4 +29,11 @@ class PlainPreviewTest {
     fun `truncates to ninety characters`() {
         assertEquals(90, plainPreview("a".repeat(200)).length)
     }
+
+    @Test
+    fun `table rules are dropped`() {
+        val table = "Both work:\n\n| | Room | SQLDelight |\n|---|:---:|---|\n| Queries | DAO | SQL |"
+        assertEquals("Both work: Room SQLDelight Queries DAO SQL", plainPreview(table))
+        assertEquals("Above Below", plainPreview("Above\n\n---\n\nBelow"))
+    }
 }

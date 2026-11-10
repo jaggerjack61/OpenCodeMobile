@@ -45,7 +45,7 @@ class UsageClient(
             .url(settings.usageEndpoint)
             .header("Authorization", "Bearer ${settings.apiKey}")
             .header("Accept", "application/json")
-            .header("User-Agent", USER_AGENT)
+            .header("User-Agent", ChatClient.USER_AGENT)
             .get()
             .build()
         client.newCall(request).execute().use { response ->
@@ -88,10 +88,6 @@ class UsageClient(
                 "Secure connection failed. Check the API base URL in Settings."
             else -> "Network error: ${message.ifBlank { "connection failed" }}"
         }
-    }
-
-    companion object {
-        private const val USER_AGENT = "opencode-mobile/1.0.0 (Android)"
     }
 }
 

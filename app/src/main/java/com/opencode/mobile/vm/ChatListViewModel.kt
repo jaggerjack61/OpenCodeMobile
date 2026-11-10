@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.opencode.mobile.data.ConversationStore
 import com.opencode.mobile.data.ConversationSummary
+import com.opencode.mobile.data.ModelCatalogRepository
 import com.opencode.mobile.data.SettingsStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +22,7 @@ data class ChatListUiState(
 class ChatListViewModel(
     private val conversationStore: ConversationStore,
     private val settingsStore: SettingsStore,
+    private val modelCatalog: ModelCatalogRepository,
 ) : ViewModel() {
     private val hasApiKey = MutableStateFlow(false)
     private val loading = MutableStateFlow(true)
@@ -51,6 +53,7 @@ class ChatListViewModel(
             conversationStore.refresh()
             loading.value = false
         }
+        viewModelScope.launch { modelCatalog.refresh() }
     }
 
     fun delete(conversationId: String) {

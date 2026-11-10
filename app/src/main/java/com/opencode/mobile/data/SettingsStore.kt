@@ -22,6 +22,7 @@ data class AppSettings(
 ) {
     val hasApiKey: Boolean get() = apiKey.isNotBlank()
     val chatEndpoint: String get() = baseUrl.trimEnd('/') + "/chat/completions"
+    val modelsEndpoint: String get() = baseUrl.trimEnd('/') + "/models"
     val usageEndpoint: String
         get() {
             val normalized = baseUrl.trim().trimEnd('/')
@@ -72,6 +73,19 @@ class SettingsStore(context: Context) {
             putString(KEY_THEME, settings.themeMode.name)
             putString(KEY_THINKING, settings.thinkingEffort)
         }.apply()
+    }
+
+    /** The endpoint alone, without decrypting the API key. */
+    fun baseUrl(): String = prefs.getString(KEY_BASE_URL, AppSettings.DEFAULT_BASE_URL).orEmpty()
+        .ifBlank { AppSettings.DEFAULT_BASE_URL }
+
+    /** Remembers the model and effort a chat just used, so the next new chat starts with them. */
+    fun saveLastUsed(modelId: String, thinkingEffort: ThinkingEffort) {
+        if (modelId.isBlank()) return
+        prefs.edit()
+            .putString(KEY_MODEL, modelId.trim())
+            .putString(KEY_THINKING, thinkingEffort.name)
+            .apply()
     }
 
     fun clearApiKey() {

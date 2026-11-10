@@ -39,15 +39,17 @@ Chat with GLM, Kimi, DeepSeek, Qwen, MiniMax and more from your phone, in the sa
 ## Highlights
 
 - **Streaming chat** with Markdown rendering: headings, lists, tables, inline code and scrollable code blocks.
-- **25 OpenCode Go models**, searchable, with icons for thinking, image and audio support, and the option to use any model ID.
+- **The live OpenCode Go model list**, fetched from OpenCode and cached on the device, so new and retired models show up without an app update. Search it, filter it by Free, Images or Thinking, or type any model ID.
+- **Free models**: models that OpenCode Go serves for free are tagged **FREE** and have their own filter. They keep working after you reach your plan's usage limit.
 - **Thinking effort per chat**: Auto, None, Minimal, Low, Medium, High, Extra high or Max, limited to the levels each model supports.
+- **Picks up where you left off**: a new chat starts with the model and thinking effort you used last.
 - **Visible reasoning and tool steps**: collapsible *Thought*, *Searched* and *Ran* rows show what the model did before it answered.
 - **Web search**: the model can search the web and cite sources. No search API key is needed.
 - **Optional shell tool**: runs `sh` commands in a sandboxed, app-private workspace. Off by default.
 - **Image and audio attachments** for models that accept them.
 - **Usage dashboard** with your 5-hour, weekly and monthly OpenCode Go limits and reset countdowns.
 - **Private by design**: your API key is encrypted with the Android Keystore, and conversations never leave the device except to talk to the model.
-- **Light, dark and system themes**, set in IBM Plex Mono.
+- **Light, dark and system themes**, set in IBM Plex Mono with OpenCode's squared, hairline look.
 
 ## Tour
 
@@ -60,48 +62,61 @@ Chat with GLM, Kimi, DeepSeek, Qwen, MiniMax and more from your phone, in the sa
     <td align="center"><img src="docs/screenshots/streaming.png" width="240" alt="A response streaming in" /></td>
   </tr>
   <tr>
-    <td align="center"><sub>Conversations, newest first</sub></td>
+    <td align="center"><sub>Conversations grouped by day, newest first</sub></td>
     <td align="center"><sub>Start a chat or pick a suggestion</sub></td>
     <td align="center"><sub>Responses stream in live; tap ■ to stop</sub></td>
   </tr>
 </table>
 
-### Reasoning, tools and model controls
+### Models and per-chat controls
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/reasoning-and-search.png" width="240" alt="Expanded reasoning after a web search" /></td>
+    <td align="center"><img src="docs/screenshots/free-models.png" width="240" alt="Model picker filtered to free models" /></td>
     <td align="center"><img src="docs/screenshots/thinking-effort.png" width="240" alt="Thinking effort menu" /></td>
     <td align="center"><img src="docs/screenshots/tools-menu.png" width="240" alt="Attachments and tools menu" /></td>
   </tr>
   <tr>
-    <td align="center"><sub>Expand any step to read the reasoning or tool output</sub></td>
+    <td align="center"><sub>Filter the model list to the free models</sub></td>
     <td align="center"><sub>Effort levels offered by the current model</sub></td>
     <td align="center"><sub>Attach media and toggle tools per chat</sub></td>
   </tr>
 </table>
 
-### Usage, settings and dark mode
+### Reasoning, usage and settings
 
 <table>
   <tr>
+    <td align="center"><img src="docs/screenshots/reasoning-and-search.png" width="240" alt="Expanded reasoning after a web search" /></td>
     <td align="center"><img src="docs/screenshots/usage.png" width="240" alt="Usage limits" /></td>
     <td align="center"><img src="docs/screenshots/settings.png" width="240" alt="Settings" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Expand any step to read the reasoning or tool output</sub></td>
+    <td align="center"><sub>Rolling plan limits with reset countdowns</sub></td>
+    <td align="center"><sub>API key, new-chat model, endpoint and theme</sub></td>
+  </tr>
+</table>
+
+### Dark theme
+
+<table>
+  <tr>
     <td align="center"><img src="docs/screenshots/dark-chat-list.png" width="240" alt="Chat list in dark mode" /></td>
   </tr>
   <tr>
-    <td align="center"><sub>Rolling plan limits with reset countdowns</sub></td>
-    <td align="center"><sub>API key, defaults, endpoint and theme</sub></td>
-    <td align="center"><sub>Dark theme</sub></td>
+    <td align="center"><sub>Chats grouped by day</sub></td>
   </tr>
 </table>
+
+> The screenshots show sample conversations served by a local test endpoint, not live model output.
 
 ## Getting started
 
 ### Requirements
 
 - An Android phone running **Android 8.0 (API 26)** or newer.
-- An **OpenCode Go** or **Go Plus** subscription, and an API key from the [OpenCode Console](https://opencode.ai/console).
+- An active **OpenCode Go** or **Go Plus** subscription, and an API key from the [OpenCode Console](https://opencode.ai/console). The free models are served through Go too, so they also need the subscription.
 
 ### Install
 
@@ -123,6 +138,7 @@ Signed APKs are published on the [Releases page](https://github.com/jaggerjack61
 
 | Version | Date | Highlights |
 | --- | --- | --- |
+| [v1.1.0](https://github.com/jaggerjack61/OpenCodeMobile/releases/tag/v1.1.0) | 2026-11-10 | Live model list with free models, new chats remember the last model and effort, refreshed OpenCode-style UI |
 | [v1.0.0](https://github.com/jaggerjack61/OpenCodeMobile/releases/tag/v1.0.0) | 2026-10-20 | First public release |
 
 ### Verify a download
@@ -130,8 +146,8 @@ Signed APKs are published on the [Releases page](https://github.com/jaggerjack61
 Check the APK against the checksum in the release notes:
 
 ```bash
-shasum -a 256 OpenCodeMobile-v1.0.0.apk      # macOS / Linux
-certutil -hashfile OpenCodeMobile-v1.0.0.apk SHA256   # Windows
+shasum -a 256 OpenCodeMobile-v1.1.0.apk      # macOS / Linux
+certutil -hashfile OpenCodeMobile-v1.1.0.apk SHA256   # Windows
 ```
 
 Every official release is signed with the same certificate:
@@ -140,7 +156,7 @@ Every official release is signed with the same certificate:
 SHA-256: 5C:C4:36:06:50:9D:B8:5D:FB:80:14:95:83:BF:90:0B:EF:84:79:87:72:AC:4B:92:58:5C:E0:37:41:2A:11:A5
 ```
 
-To check it, run `apksigner verify --print-certs OpenCodeMobile-v1.0.0.apk` from the Android SDK build-tools.
+To check it, run `apksigner verify --print-certs OpenCodeMobile-v1.1.0.apk` from the Android SDK build-tools.
 
 ### Updating
 
@@ -151,7 +167,8 @@ Install a newer release over the existing app. Your conversations and settings a
 | To… | Do this |
 | --- | --- |
 | Start a conversation | Tap **New chat** on the home screen. The first message becomes the title. |
-| Switch model | Tap the model name in the composer, then search or scroll. Icons show thinking (💡), image and audio support. |
+| Switch model | Tap the model name in the composer, then search, scroll or filter by **Free**, **Images** or **Thinking**. Icons show thinking (💡), image and audio support. |
+| Use a free model | Open the model list and tap **Free**. Free models carry a **FREE** tag everywhere they appear. |
 | Use a model that isn't listed | Type its ID in the model search box and tap **Use "…"**. |
 | Change thinking effort | Tap the 💡 chip next to the model name. It's hidden for models with no effort options. |
 | Turn web search or shell on or off | Tap **+** in the composer. Active tools appear as icons next to the **+**. |
@@ -162,7 +179,7 @@ Install a newer release over the existing app. Your conversations and settings a
 | Check plan usage | Tap the usage ring on the home screen, or ⋮ → **Usage** in a chat. |
 | Delete a chat | Tap ⋮ on the chat in the list, or ⋮ → **Delete chat** inside it. |
 
-Model, effort and tool choices are saved per conversation. Defaults for new chats are set in **Settings**.
+Model, effort and tool choices are saved per conversation. A new chat starts with the model and thinking effort you used last; you can also change them under **New chats** in Settings.
 
 ### Tools
 
@@ -204,7 +221,7 @@ sdk.dir=/path/to/Android/sdk
 ./gradlew :app:testDebugUnitTest
 ```
 
-The unit tests cover the SSE parser, model catalog rules, the usage client and endpoint derivation, web search parsing, chat-list previews and formatting helpers.
+The unit tests cover the SSE parser, model catalog rules, the live model list parser, API error messages, the usage client and endpoint derivation, web search parsing, chat-list previews and formatting helpers.
 
 ### Release build
 
@@ -231,6 +248,12 @@ keyPassword=…
 
 Without `keystore.properties`, Gradle produces `app-release-unsigned.apk` instead, which you can sign later with `apksigner`.
 
+To try a release build next to an installed copy, give it its own package name:
+
+```bash
+./gradlew :app:assembleRelease -PappIdSuffix=.rc
+```
+
 ### Publishing a release
 
 1. Bump `versionCode` and `versionName` in [`app/build.gradle.kts`](app/build.gradle.kts).
@@ -254,8 +277,8 @@ All configuration lives in **Settings**:
 | Setting | Default | Notes |
 | --- | --- | --- |
 | API key | — | Encrypted with the Android Keystore. |
-| Model | `glm-5.3` | Default for new chats. Any OpenCode Go model ID is accepted. |
-| Thinking effort | Auto | Default for new chats. Auto omits `reasoning_effort`. |
+| Model for new chats | `glm-5.3` | Follows the model you used last. Any OpenCode Go model ID is accepted. |
+| Thinking effort for new chats | Auto | Follows the effort you used last. Auto omits `reasoning_effort`. |
 | Base URL | `https://opencode.ai/inference/go/openai/v1` | Any OpenAI-compatible endpoint. **Reset URL** restores the default. |
 | Appearance | System | System, Light or Dark. |
 
@@ -264,11 +287,18 @@ All configuration lives in **Settings**:
 - Chats are sent to `POST {baseUrl}/chat/completions` with `stream: true`, and parsed as server-sent events.
 - When a chat's effort isn't Auto, it's sent as `reasoning_effort`.
 - Each conversation sends a stable `x-opencode-session` header and a client-specific `User-Agent`, as OpenCode Go recommends.
+- The model list comes from `GET {baseUrl}/models` and is cached on the device. A list bundled with the app is used until it loads, and whenever the endpoint doesn't publish an OpenCode catalog.
 - The Usage screen derives its endpoint from the base URL and uses the same API key.
 
 ### Supported models
 
-The built-in catalog only lists models that work through OpenCode Go's OpenAI-compatible chat completions endpoint. Models served through other protocols, such as Claude Haiku and Gemini, are intentionally left out. Any other model ID can still be used through the model picker or Settings.
+The picker lists the models that OpenCode Go serves through its OpenAI-compatible chat completions endpoint, read from Go's live catalog. Models served through other protocols, such as Claude Haiku and Gemini, are intentionally left out. Any other model ID can still be used through the model picker or Settings.
+
+### Free models
+
+Models that OpenCode Go offers at no cost are tagged **FREE**. They're available for a limited time, change often, and still need an active Go subscription.
+
+OpenCode Zen has a separate free tier (Big Pickle, GLM-5.3-Flash Free, DeepSeek V4.1 Flash Free and others). OpenCode [only serves it to its own clients](https://opencode.ai/docs/zen/), so those models aren't offered here. If you enter one of their IDs, the app shows OpenCode's refusal.
 
 ### Local development endpoints
 
@@ -278,7 +308,7 @@ Cleartext HTTP is only allowed for `localhost`, `127.0.0.1` and `10.0.2.2` (the 
 
 - **API key:** encrypted with an Android Keystore key and stored only on the device. It's only ever sent in the `Authorization` header to the endpoint you configure.
 - **Conversations and attachments:** stored as files in app-private storage. They're excluded from Android cloud backups (`allowBackup="false"`) and deleted when you delete the chat or uninstall the app.
-- **Network:** traffic goes only to your configured endpoint, to the usage endpoint, and, when web search is on, to Brave Search and DuckDuckGo. There's no analytics or telemetry.
+- **Network:** traffic goes only to your configured endpoint (chat and the model list), to the usage endpoint, and, when web search is on, to Brave Search and DuckDuckGo. There's no analytics or telemetry.
 - **Shell tool:** off by default, confirmed per chat, and limited to an app-private directory with the app's own permissions.
 
 ## Architecture
@@ -287,8 +317,8 @@ A single-module Jetpack Compose app using MVVM, with no DI framework. A small ap
 
 ```text
 app/src/main/java/com/opencode/mobile/
-├── data/       Conversation and attachment storage, encrypted settings, model catalog
-├── network/    OkHttp chat client, SSE parser, usage client, web search and shell tools
+├── data/       Conversation and attachment storage, encrypted settings, model catalog and its cache
+├── network/    OkHttp chat client, SSE parser, model list and usage clients, web search and shell tools
 ├── vm/         Chat, chat list, settings and usage view models (StateFlow)
 └── ui/         Compose screens, composer, model picker, theme and typography
 ```
@@ -306,7 +336,9 @@ app/src/main/java/com/opencode/mobile/
 | Symptom | Fix |
 | --- | --- |
 | **Request failed** with a 401 | Check the API key in Settings and use **Test connection**. |
-| **Request failed** with an unsupported model | The model may not be served through the OpenAI-compatible endpoint. Choose a model from the built-in list. |
+| **Request failed** with an unsupported model | The model may not be served through the OpenAI-compatible endpoint. Choose a model from the list. |
+| **An active OpenCode Go subscription is required** | The key's Go subscription isn't active. Renew it in the [OpenCode Console](https://opencode.ai/console). Free models need it too. |
+| **OpenCode only offers this free model inside its own app** | That's a Zen free-tier model, which OpenCode limits to its own clients. Pick a model tagged **FREE** in the list instead. |
 | No attach option under **+** | The current model doesn't accept images or audio. Switch to a model with the image icon in the picker. |
 | No effort chip | The model doesn't expose effort levels, so it always uses its default. |
 | **Couldn't load usage** | Usage needs a valid OpenCode Go API key. With a non-OpenCode base URL, the app falls back to the default usage endpoint. Tap **Retry**. |

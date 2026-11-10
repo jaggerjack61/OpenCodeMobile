@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -70,6 +69,7 @@ fun Composer(
     importingAttachments: Boolean,
     attachLabel: String?,
     modelName: String,
+    modelFree: Boolean,
     effort: ThinkingEffort,
     effortChoices: List<ThinkingEffort>,
     webSearchEnabled: Boolean,
@@ -94,7 +94,7 @@ fun Composer(
             .padding(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 10.dp),
     ) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
+            shape = OcShapes.panel,
             color = colors.surfaceContainerLow,
             border = BorderStroke(1.dp, colors.outlineVariant),
         ) {
@@ -171,6 +171,7 @@ fun Composer(
                             onClick = onOpenModels,
                             trailing = Icons.Outlined.ExpandMore,
                             emphasized = true,
+                            tag = if (modelFree) "Free" else null,
                             modifier = Modifier.weight(1f, fill = false),
                         )
                         if (effortChoices.size > 1) {
@@ -204,13 +205,14 @@ private fun ComposerChip(
     leading: ImageVector? = null,
     trailing: ImageVector? = null,
     emphasized: Boolean = false,
+    tag: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val content = if (emphasized) colors.onSurface else colors.onSurfaceVariant
     Row(
         modifier = modifier
             .height(32.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(OcShapes.control)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -228,6 +230,10 @@ private fun ComposerChip(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
         )
+        if (tag != null) {
+            Spacer(Modifier.width(6.dp))
+            Tag(tag)
+        }
         if (trailing != null) {
             Spacer(Modifier.width(2.dp))
             Icon(trailing, contentDescription = null, modifier = Modifier.size(14.dp), tint = content)
@@ -252,7 +258,7 @@ private fun ToolsMenuButton(
         Row(
             modifier = Modifier
                 .height(32.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(OcShapes.control)
                 .clickable(enabled = enabled) { open = true }
                 .padding(horizontal = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -285,7 +291,7 @@ private fun ToolsMenuButton(
         DropdownMenu(
             expanded = open,
             onDismissRequest = { open = false },
-            shape = RoundedCornerShape(14.dp),
+            shape = OcShapes.card,
             containerColor = colors.surfaceContainerHigh,
         ) {
             if (attachLabel != null) {
@@ -358,7 +364,7 @@ private fun EffortButton(
         DropdownMenu(
             expanded = open,
             onDismissRequest = { open = false },
-            shape = RoundedCornerShape(14.dp),
+            shape = OcShapes.card,
             containerColor = colors.surfaceContainerHigh,
         ) {
             Text(
@@ -410,7 +416,7 @@ private fun SendButton(
     Box(
         modifier = Modifier
             .size(34.dp)
-            .clip(CircleShape)
+            .clip(OcShapes.control)
             .background(if (active) colors.primary else colors.surfaceContainerHighest)
             .clickable(enabled = active) { if (isStreaming) onStop() else onSend() },
         contentAlignment = Alignment.Center,
@@ -434,7 +440,7 @@ private fun PendingAttachmentChip(attachment: ChatAttachment, onRemove: () -> Un
                     attachment = attachment,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(12.dp)),
+                        .clip(OcShapes.control),
                 )
                 RemoveBadge(
                     onRemove = onRemove,
@@ -445,7 +451,7 @@ private fun PendingAttachmentChip(attachment: ChatAttachment, onRemove: () -> Un
             }
         }
         else -> {
-            Surface(shape = RoundedCornerShape(12.dp), color = colors.surfaceContainerHighest) {
+            Surface(shape = OcShapes.control, color = colors.surfaceContainerHighest) {
                 Row(
                     modifier = Modifier.padding(start = 10.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,

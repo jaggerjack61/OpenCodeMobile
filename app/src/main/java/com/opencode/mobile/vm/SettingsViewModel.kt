@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.opencode.mobile.data.AppSettings
 import com.opencode.mobile.data.ModelCatalog
+import com.opencode.mobile.data.ModelCatalogRepository
 import com.opencode.mobile.data.SettingsStore
 import com.opencode.mobile.data.ThemeMode
 import com.opencode.mobile.data.ThinkingEffort
@@ -34,21 +35,36 @@ sealed interface SettingsEvent {
 class SettingsViewModel(
     private val settingsStore: SettingsStore,
     private val chatClient: ChatClient,
+    private val modelCatalog: ModelCatalogRepository,
 ) : ViewModel() {
-    private val loaded = settingsStore.load()
-    private val _state = MutableStateFlow(
-        SettingsUiState(
-            apiKey = loaded.apiKey,
-            modelId = loaded.modelId,
-            baseUrl = loaded.baseUrl,
-            themeMode = loaded.themeMode,
-            thinkingEffort = ThinkingEffort.from(loaded.thinkingEffort),
-        ),
-    )
+    private val _state = MutableStateFlow(storedState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
 
     private val _events = MutableSharedFlow<SettingsEvent>(extraBufferCapacity = 8)
     val events: SharedFlow<SettingsEvent> = _events.asSharedFlow()
+
+    private fun storedState(): SettingsUiState {
+        val stored = settingsStore.load()
+        return SettingsUiState(
+            apiKey = stored.apiKey,
+            modelId = stored.modelId,
+            baseUrl = stored.baseUrl,
+            themeMode = stored.themeMode,
+            thinkingEffort = ThinkingEffort.from(stored.thinkingEffort),
+        )
+    }
+
+    /**
+     * Discards unsaved edits and shows what is stored. Called whenever Settings opens, because
+     * chats update the model and effort for new chats behind this screen's back.
+     */
+    fun reload() {
+        _state.value = storedState()
+    }
+
+    fun refreshModels() {
+        viewModelScope.launch { modelCatalog.refresh() }
+    }
 
     fun setApiKey(value: String) {
         _state.update { it.copy(apiKey = value) }
@@ -109,6 +125,7 @@ class SettingsViewModel(
         )
         settingsStore.save(settings)
         _state.update { it.copy(modelId = modelId, baseUrl = baseUrl) }
+        viewModelScope.launch { modelCatalog.refresh(force = true) }
         _events.tryEmit(SettingsEvent.Saved(settings))
     }
 

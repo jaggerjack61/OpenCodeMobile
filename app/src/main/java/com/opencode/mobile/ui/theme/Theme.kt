@@ -3,7 +3,9 @@ package com.opencode.mobile.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -13,6 +15,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.opencode.mobile.data.ThemeMode
 
@@ -86,6 +89,15 @@ private val LightColors = lightColorScheme(
     inversePrimary = Color(0xFFF1ECEC),
 )
 
+// OpenCode's surfaces are squared off with hairline borders, so the Material defaults are tightened.
+private val OpenCodeShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(6.dp),
+    medium = RoundedCornerShape(8.dp),
+    large = RoundedCornerShape(10.dp),
+    extraLarge = RoundedCornerShape(14.dp),
+)
+
 @Composable
 fun OpenCodeTheme(
     themeMode: ThemeMode,
@@ -116,6 +128,7 @@ fun OpenCodeTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = OpenCodeTypography,
+        shapes = OpenCodeShapes,
         content = content,
     )
 }

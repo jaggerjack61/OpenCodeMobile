@@ -9,6 +9,7 @@ import com.opencode.mobile.data.ChatToolCall
 import com.opencode.mobile.data.Conversation
 import com.opencode.mobile.data.ConversationStore
 import com.opencode.mobile.data.ModelCatalog
+import com.opencode.mobile.data.ModelCatalogRepository
 import com.opencode.mobile.data.SettingsStore
 import com.opencode.mobile.data.ThinkingEffort
 import com.opencode.mobile.network.ChatClient
@@ -66,6 +67,7 @@ class ChatViewModel(
     private val chatClient: ChatClient,
     private val webSearchClient: WebSearchClient,
     private val shellTool: ShellTool,
+    private val modelCatalog: ModelCatalogRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChatUiState())
     val state: StateFlow<ChatUiState> = _state.asStateFlow()
@@ -80,32 +82,12 @@ class ChatViewModel(
 
     init {
         if (conversationId == null) {
-            val settings = settingsStore.load()
-            _state.value = ChatUiState(
-                conversation = conversationStore.newConversation(
-                    modelId = settings.modelId,
-                    thinkingEffort = ModelCatalog.resolveEffort(
-                        settings.modelId,
-                        ThinkingEffort.from(settings.thinkingEffort),
-                    ),
-                ),
-                isLoading = false,
-            )
+            _state.value = ChatUiState(conversation = newConversation(), isLoading = false)
         } else {
             viewModelScope.launch {
                 val loaded = conversationStore.load(conversationId)
-                val settings = settingsStore.load()
                 if (loaded == null) {
-                    _state.value = ChatUiState(
-                        conversation = conversationStore.newConversation(
-                            modelId = settings.modelId,
-                            thinkingEffort = ModelCatalog.resolveEffort(
-                                settings.modelId,
-                                ThinkingEffort.from(settings.thinkingEffort),
-                            ),
-                        ),
-                        isLoading = false,
-                    )
+                    _state.value = ChatUiState(conversation = newConversation(), isLoading = false)
                     _events.tryEmit(ChatEvent.Message("That conversation is no longer available."))
                 } else {
                     persisted = true
@@ -113,6 +95,33 @@ class ChatViewModel(
                 }
             }
         }
+    }
+
+    /** A new chat starts with the model and thinking effort that were used last. */
+    private fun newConversation(): Conversation {
+        val settings = settingsStore.load()
+        return conversationStore.newConversation(
+            modelId = settings.modelId,
+            thinkingEffort = ModelCatalog.resolveEffort(
+                settings.modelId,
+                ThinkingEffort.from(settings.thinkingEffort),
+            ),
+        )
+    }
+
+    private fun rememberLastUsed(conversation: Conversation) {
+        settingsStore.saveLastUsed(
+            modelId = conversation.modelId,
+            thinkingEffort = ModelCatalog.resolveEffort(
+                conversation.modelId,
+                ThinkingEffort.from(conversation.thinkingEffort),
+            ),
+        )
+    }
+
+    /** Picks up models that were added or retired since the catalog was last fetched. */
+    fun refreshModels() {
+        viewModelScope.launch { modelCatalog.refresh() }
     }
 
     fun setDraft(text: String) {
@@ -199,6 +208,7 @@ class ChatViewModel(
                 isStreaming = true,
             )
         }
+        rememberLastUsed(updated)
         runAgent(updated)
     }
 
@@ -228,6 +238,7 @@ class ChatViewModel(
         if (ThinkingEffort.from(conversation.thinkingEffort) == resolved) return
         val updated = conversation.copy(thinkingEffort = resolved.name)
         _state.update { it.copy(conversation = updated) }
+        rememberLastUsed(updated)
         if (persisted) {
             viewModelScope.launch { saveCurrent() }
         }
@@ -254,6 +265,7 @@ class ChatViewModel(
         }
         val updated = conversation.copy(modelId = modelId, thinkingEffort = effort.name)
         _state.update { it.copy(conversation = updated, pendingAttachments = kept) }
+        rememberLastUsed(updated)
         if (persisted) {
             viewModelScope.launch { saveCurrent() }
         }

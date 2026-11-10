@@ -159,7 +159,11 @@ fun ChatScreen(
     var confirmShell by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val modelId = conversation?.modelId ?: ModelCatalog.defaultModelId
-    val mediaKinds = ModelCatalog.mediaKindsFor(modelId)
+    // Read through the flow so the screen follows the catalog when the live list arrives.
+    val catalog by ModelCatalog.modelsFlow.collectAsStateWithLifecycle()
+    val model = remember(catalog, modelId) { catalog.firstOrNull { it.id == modelId } }
+    val modelName = model?.name ?: modelId
+    val mediaKinds = remember(catalog, modelId) { ModelCatalog.mediaKindsFor(modelId) }
     val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         viewModel.addAttachments(uris.map { it.toString() })
     }
@@ -234,7 +238,7 @@ fun ChatScreen(
                             DropdownMenu(
                                 expanded = menuOpen,
                                 onDismissRequest = { menuOpen = false },
-                                shape = RoundedCornerShape(14.dp),
+                                shape = OcShapes.card,
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             ) {
                                 DropdownMenuItem(
@@ -282,7 +286,7 @@ fun ChatScreen(
         },
         bottomBar = {
             val effort = ThinkingEffort.from(conversation?.thinkingEffort)
-            val efforts = ModelCatalog.effortsFor(modelId)
+            val efforts = remember(catalog, modelId) { ModelCatalog.effortsFor(modelId) }
             Composer(
                 draft = state.draft,
                 isStreaming = state.isStreaming,
@@ -293,7 +297,8 @@ fun ChatScreen(
                     mediaKinds.size == 1 -> "Add ${mediaKinds.first().label.lowercase()}"
                     else -> "Add images or audio"
                 },
-                modelName = ModelCatalog.nameFor(modelId),
+                modelName = modelName,
+                modelFree = model?.free == true,
                 effort = effort,
                 effortChoices = if (efforts.isEmpty()) emptyList() else listOf(ThinkingEffort.AUTO) + efforts,
                 webSearchEnabled = conversation?.webSearchEnabled ?: true,
@@ -336,7 +341,8 @@ fun ChatScreen(
                 }
                 messages.isEmpty() -> {
                     EmptyConversation(
-                        modelName = ModelCatalog.nameFor(modelId),
+                        modelName = modelName,
+                        modelFree = model?.free == true,
                         onSuggestion = viewModel::setDraft,
                     )
                 }
@@ -372,7 +378,7 @@ fun ChatScreen(
                                 .padding(bottom = 12.dp),
                         ) {
                             Surface(
-                                shape = CircleShape,
+                                shape = OcShapes.control,
                                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                 shadowElevation = 2.dp,
@@ -404,6 +410,7 @@ fun ChatScreen(
                 showModels = false
             },
             onDismiss = { showModels = false },
+            onOpened = viewModel::refreshModels,
         )
     }
 
@@ -418,7 +425,7 @@ fun ChatScreen(
                         confirmDelete = false
                         viewModel.deleteConversation()
                     },
-                ) { Text("Delete") }
+                ) { Text("Delete", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmDelete = false }) { Text("Cancel") }
@@ -496,7 +503,7 @@ fun AttachmentImage(attachment: ChatAttachment, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmptyConversation(modelName: String, onSuggestion: (String) -> Unit) {
+private fun EmptyConversation(modelName: String, modelFree: Boolean, onSuggestion: (String) -> Unit) {
     val suggestions = listOf(
         "Explain a tricky piece of code",
         "Write a Kotlin function for me",
@@ -508,50 +515,61 @@ private fun EmptyConversation(modelName: String, onSuggestion: (String) -> Unit)
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+            .padding(horizontal = 20.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        AppMark(size = 48.dp)
+        AppMark(size = 40.dp)
         Spacer(Modifier.height(20.dp))
         Text(
             text = "What are we building?",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = modelName,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            if (modelFree) {
+                Spacer(Modifier.width(6.dp))
+                Tag("Free")
+            }
+        }
+        Spacer(Modifier.height(4.dp))
         Text(
-            text = "Chatting with $modelName. Conversations stay on this device.",
+            text = "Conversations stay on this device.",
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
         )
         Spacer(Modifier.height(24.dp))
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = colors.surfaceContainerLow,
-            border = BorderStroke(1.dp, colors.outlineVariant),
-        ) {
-            Column {
-                suggestions.forEachIndexed { index, suggestion ->
-                    if (index > 0) HorizontalDivider(color = colors.outlineVariant)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSuggestion(suggestion) }
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = suggestion,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Icon(
-                            imageVector = Icons.Outlined.NorthWest,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = colors.onSurfaceVariant,
-                        )
-                    }
+        SectionLabel("Try")
+        Spacer(Modifier.height(8.dp))
+        Panel {
+            suggestions.forEachIndexed { index, suggestion ->
+                if (index > 0) HorizontalDivider(color = colors.outlineVariant)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSuggestion(suggestion) }
+                        .padding(horizontal = 14.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = suggestion,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.Outlined.NorthWest,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = colors.onSurfaceVariant,
+                    )
                 }
             }
         }
@@ -603,7 +621,7 @@ private fun UserMessage(message: ChatMessage) {
                             attachment = attachment,
                             modifier = Modifier
                                 .size(140.dp)
-                                .clip(RoundedCornerShape(14.dp)),
+                                .clip(OcShapes.card),
                         )
                         else -> AudioAttachmentChip(attachment)
                     }
@@ -613,7 +631,7 @@ private fun UserMessage(message: ChatMessage) {
         }
         if (message.content.isNotBlank()) {
             Surface(
-                shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomStart = 18.dp, bottomEnd = 6.dp),
+                shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 12.dp, bottomEnd = 3.dp),
                 color = colors.surfaceContainerHigh,
                 border = BorderStroke(1.dp, colors.outlineVariant),
             ) {
@@ -631,7 +649,7 @@ private fun UserMessage(message: ChatMessage) {
 @Composable
 private fun AudioAttachmentChip(attachment: ChatAttachment) {
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = OcShapes.card,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -681,7 +699,7 @@ private fun StepRow(
     val chevronRotation = if (expanded) 180f else 0f
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(OcShapes.tag)
             .then(if (onToggle != null) Modifier.clickable(onClick = onToggle) else Modifier)
             .padding(vertical = 6.dp, horizontal = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -838,7 +856,7 @@ private fun AssistantMessage(
 private fun ErrorCard(error: String, canRetry: Boolean, onRetry: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Surface(
-        shape = RoundedCornerShape(14.dp),
+        shape = OcShapes.card,
         color = colors.errorContainer,
         border = BorderStroke(1.dp, colors.error.copy(alpha = 0.35f)),
         modifier = Modifier.fillMaxWidth(),
@@ -896,7 +914,7 @@ private fun MessageFooter(text: String, modelId: String?) {
         Box(
             modifier = Modifier
                 .size(32.dp)
-                .clip(CircleShape)
+                .clip(OcShapes.control)
                 .clickable {
                     clipboard.setText(AnnotatedString(text))
                     copied = true

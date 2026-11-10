@@ -1,6 +1,9 @@
 package com.opencode.mobile.ui
 
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -31,5 +34,29 @@ fun resetLabel(resetAt: Long, now: Long = System.currentTimeMillis()): String {
         hours > 0 -> "Resets in ${hours}h ${minutes % 60}m"
         minutes < 1 -> "Resets in <1m"
         else -> "Resets in ${minutes}m"
+    }
+}
+
+/** Sections of the chat list, newest first. */
+enum class DateBucket(val label: String) {
+    TODAY("Today"),
+    YESTERDAY("Yesterday"),
+    WEEK("Previous 7 days"),
+    OLDER("Older"),
+}
+
+fun dateBucket(
+    timestamp: Long,
+    now: Long = System.currentTimeMillis(),
+    zone: ZoneId = ZoneId.systemDefault(),
+): DateBucket {
+    val day = Instant.ofEpochMilli(timestamp).atZone(zone).toLocalDate()
+    val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+    val daysAgo = ChronoUnit.DAYS.between(day, today)
+    return when {
+        daysAgo <= 0 -> DateBucket.TODAY
+        daysAgo == 1L -> DateBucket.YESTERDAY
+        daysAgo <= 7 -> DateBucket.WEEK
+        else -> DateBucket.OLDER
     }
 }

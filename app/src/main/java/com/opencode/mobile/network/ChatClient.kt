@@ -1,6 +1,7 @@
 package com.opencode.mobile.network
 
 import android.util.Base64
+import com.opencode.mobile.BuildConfig
 import com.opencode.mobile.data.AppSettings
 import com.opencode.mobile.data.ChatAttachment
 import com.opencode.mobile.data.ChatMessage
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -22,6 +24,7 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addAll
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import okhttp3.Call
@@ -101,7 +104,7 @@ class ChatClient(
                     response.use { resp ->
                         if (!resp.isSuccessful) {
                             val body = runCatching { resp.body.string() }.getOrNull().orEmpty()
-                            trySend(StreamEvent.Failure(errorFor(resp.code, body)))
+                            trySend(StreamEvent.Failure(apiErrorMessage(resp.code, body)))
                             close()
                             return
                         }
@@ -165,7 +168,7 @@ class ChatClient(
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
                         val body = runCatching { response.body.string() }.getOrNull().orEmpty()
-                        throw ChatApiException(errorFor(response.code, body))
+                        throw ChatApiException(apiErrorMessage(response.code, body))
                     }
                 }
             }
@@ -417,25 +420,6 @@ class ChatClient(
         )
     }
 
-    private fun errorFor(code: Int, body: String): String {
-        val apiMessage = runCatching {
-            val element = kotlinx.serialization.json.Json.parseToJsonElement(body)
-            val obj = element as? JsonObject ?: return@runCatching null
-            val error = obj["error"] as? JsonObject
-            (error?.get("message") as? JsonPrimitive)?.content
-                ?: (obj["message"] as? JsonPrimitive)?.content
-        }.getOrNull()
-
-        return when (code) {
-            401, 403 -> "Invalid or expired API key. Check it in Settings."
-            402 -> "OpenCode Go needs credits. Add credits in the OpenCode Console."
-            404 -> "That model is unavailable. Pick a different model."
-            429 -> "Rate limited by OpenCode Go. Try again in a moment."
-            in 500..599 -> "OpenCode Go is having trouble right now (HTTP $code)."
-            else -> apiMessage ?: "Request failed (HTTP $code)."
-        }
-    }
-
     private fun friendlyNetworkError(error: IOException): String {
         val message = error.message.orEmpty()
         return when {
@@ -451,7 +435,37 @@ class ChatClient(
     }
 
     companion object {
-        private const val USER_AGENT = "opencode-mobile/1.0.0 (Android)"
+        /** OpenCode Go asks clients to identify themselves with their own user agent. */
+        const val USER_AGENT = "opencode-mobile/${BuildConfig.VERSION_NAME} (Android)"
         private const val MAX_HISTORY_CHARS = 240_000
+    }
+}
+
+/**
+ * Turns an error response into a message for the chat. The server's own explanation is preferred,
+ * because it says why a model was refused (for example a free model that is limited to OpenCode's
+ * own client) where a status code alone does not.
+ */
+internal fun apiErrorMessage(code: Int, body: String): String {
+    val root = runCatching { Json.parseToJsonElement(body) as? JsonObject }.getOrNull()
+    val error = root?.get("error") as? JsonObject ?: root
+    val type = (error?.get("type") as? JsonPrimitive)?.contentOrNull.orEmpty()
+    val apiMessage = ((error?.get("message") ?: root?.get("error")) as? JsonPrimitive)?.contentOrNull
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { if (it.length > 280) it.take(279).trimEnd() + "…" else it }
+
+    return when {
+        type == "FreeUsageLimitError" || type == "FreeTierError" ->
+            "OpenCode only offers this free model inside its own app. " +
+                "Pick a model tagged Free in the model list instead."
+        code == 401 -> "Invalid or expired API key. Check it in Settings."
+        code in 500..599 -> "OpenCode Go is having trouble right now (HTTP $code)."
+        apiMessage != null -> apiMessage
+        code == 403 -> "This API key can't use that model."
+        code == 402 -> "OpenCode Go needs credits. Add credits in the OpenCode Console."
+        code == 404 -> "That model is unavailable. Pick a different model."
+        code == 429 -> "Rate limited by OpenCode Go. Try again in a moment."
+        else -> "Request failed (HTTP $code)."
     }
 }

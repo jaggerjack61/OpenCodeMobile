@@ -131,10 +131,12 @@ private val codeFence = Regex("```[^\\n]*\\n?")
 private val link = Regex("\\[([^\\]]*)]\\([^)]*\\)")
 private val emphasis = Regex("(\\*\\*|__|\\*|~~|`)(?=\\S)(.+?)(?<=\\S)\\1")
 private val linePrefix = Regex("(?m)^\\s{0,3}(#{1,6}\\s+|>\\s?|[-*+]\\s+|\\d+\\.\\s+|\\|)")
+private val tableRule = Regex("(?m)^\\s*\\|?\\s*:?-{3,}:?\\s*(\\|\\s*:?-{3,}:?\\s*)*\\|?\\s*$")
 
 /** Collapses Markdown to a single line of plain text for the chat list. */
 internal fun plainPreview(text: String): String = text
     .replace(codeFence, "")
+    .replace(tableRule, "")
     .replace(link, "$1")
     .replace(linePrefix, "")
     .replace(emphasis, "$2")

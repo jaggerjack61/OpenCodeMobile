@@ -12,7 +12,11 @@ class AppViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(ChatListViewModel::class.java) ->
-                ChatListViewModel(container.conversationStore, container.settingsStore) as T
+                ChatListViewModel(
+                    conversationStore = container.conversationStore,
+                    settingsStore = container.settingsStore,
+                    modelCatalog = container.modelCatalog,
+                ) as T
             modelClass.isAssignableFrom(ChatViewModel::class.java) ->
                 ChatViewModel(
                     conversationId = conversationId,
@@ -22,11 +26,13 @@ class AppViewModelFactory(
                     chatClient = container.chatClient,
                     webSearchClient = container.webSearchClient,
                     shellTool = container.shellTool,
+                    modelCatalog = container.modelCatalog,
                 ) as T
             modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
                 SettingsViewModel(
                     settingsStore = container.settingsStore,
                     chatClient = container.chatClient,
+                    modelCatalog = container.modelCatalog,
                 ) as T
             modelClass.isAssignableFrom(UsageViewModel::class.java) ->
                 UsageViewModel(
