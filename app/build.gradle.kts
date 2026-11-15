@@ -21,8 +21,8 @@ android {
         applicationId = "com.opencode.mobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.2.1"
         // -PappIdSuffix=.rc installs a build next to the regular app, e.g. to smoke-test a release.
         (project.findProperty("appIdSuffix") as String?)?.let { applicationIdSuffix = it }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

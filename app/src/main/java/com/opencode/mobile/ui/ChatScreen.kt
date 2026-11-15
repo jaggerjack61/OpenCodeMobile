@@ -37,6 +37,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.DisableSelection
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -99,6 +101,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -109,6 +112,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.MarkdownCodeBlock
+import com.mikepenz.markdown.compose.elements.MarkdownCodeFence
 import com.mikepenz.markdown.compose.elements.MarkdownTable
 import com.mikepenz.markdown.compose.elements.MarkdownTableHeader
 import com.mikepenz.markdown.compose.elements.MarkdownTableRow
@@ -635,12 +640,14 @@ private fun UserMessage(message: ChatMessage) {
                 color = colors.surfaceContainerHigh,
                 border = BorderStroke(1.dp, colors.outlineVariant),
             ) {
-                Text(
-                    text = message.content,
-                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 21.sp),
-                    color = colors.onSurface,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                )
+                SelectionContainer {
+                    Text(
+                        text = message.content,
+                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 21.sp),
+                        color = colors.onSurface,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    )
+                }
             }
             Box(modifier = Modifier.padding(top = 2.dp)) {
                 CopyButton(text = message.content, contentDescription = "Copy prompt")
@@ -957,46 +964,101 @@ private fun ChatMarkdown(content: String) {
     val body = type.bodyMedium.copy(fontSize = 14.sp, lineHeight = 22.sp, letterSpacing = 0.sp)
     val heading = body.copy(fontWeight = FontWeight.SemiBold)
     val markdownState = rememberMarkdownState(content, retainState = true)
-    Markdown(
-        markdownState = markdownState,
-        colors = markdownColor(
-            text = colors.onSurface,
-            codeBackground = colors.surfaceContainerHigh,
-            inlineCodeBackground = colors.surfaceContainerHighest,
-            dividerColor = colors.outlineVariant,
-            tableBackground = colors.surfaceContainerLow,
-        ),
-        typography = markdownTypography(
-            h1 = heading.copy(fontSize = 20.sp, lineHeight = 28.sp),
-            h2 = heading.copy(fontSize = 18.sp, lineHeight = 26.sp),
-            h3 = heading.copy(fontSize = 16.sp, lineHeight = 24.sp),
-            h4 = heading.copy(fontSize = 15.sp),
-            h5 = heading,
-            h6 = heading.copy(color = colors.onSurfaceVariant),
-            text = body,
-            code = body.copy(fontFamily = OpenCodeMono, fontSize = 12.sp, lineHeight = 18.sp),
-            inlineCode = body.copy(fontFamily = OpenCodeMono, fontSize = 13.sp),
-            quote = body.copy(color = colors.onSurfaceVariant, fontStyle = FontStyle.Italic),
-            paragraph = body,
-            ordered = body,
-            bullet = body,
-            list = body,
-            textLink = TextLinkStyles(
-                style = SpanStyle(
-                    color = colors.onSurface,
-                    fontWeight = FontWeight.Medium,
-                    textDecoration = TextDecoration.Underline,
-                ),
+    // Long-press to select any part of the response.
+    SelectionContainer {
+        Markdown(
+            markdownState = markdownState,
+            colors = markdownColor(
+                text = colors.onSurface,
+                codeBackground = colors.surfaceContainerHigh,
+                inlineCodeBackground = colors.surfaceContainerHighest,
+                dividerColor = colors.outlineVariant,
+                tableBackground = colors.surfaceContainerLow,
             ),
-            table = body.copy(fontSize = 13.sp, lineHeight = 19.sp),
-        ),
-        components = wrappingTableComponents,
-        modifier = Modifier.fillMaxWidth(),
-    )
+            typography = markdownTypography(
+                h1 = heading.copy(fontSize = 20.sp, lineHeight = 28.sp),
+                h2 = heading.copy(fontSize = 18.sp, lineHeight = 26.sp),
+                h3 = heading.copy(fontSize = 16.sp, lineHeight = 24.sp),
+                h4 = heading.copy(fontSize = 15.sp),
+                h5 = heading,
+                h6 = heading.copy(color = colors.onSurfaceVariant),
+                text = body,
+                code = body.copy(fontFamily = OpenCodeMono, fontSize = 12.sp, lineHeight = 18.sp),
+                inlineCode = body.copy(fontFamily = OpenCodeMono, fontSize = 13.sp),
+                quote = body.copy(color = colors.onSurfaceVariant, fontStyle = FontStyle.Italic),
+                paragraph = body,
+                ordered = body,
+                bullet = body,
+                list = body,
+                textLink = TextLinkStyles(
+                    style = SpanStyle(
+                        color = colors.onSurface,
+                        fontWeight = FontWeight.Medium,
+                        textDecoration = TextDecoration.Underline,
+                    ),
+                ),
+                table = body.copy(fontSize = 13.sp, lineHeight = 19.sp),
+            ),
+            components = wrappingTableComponents,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** Code block with a header row showing the language and a copy button for just this block. */
+@Composable
+private fun CopyableCodeBlock(code: String, language: String?, style: TextStyle) {
+    val colors = MaterialTheme.colorScheme
+    val trimmed = code.trimEnd('\n')
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clip(OcShapes.control)
+            .background(colors.surfaceContainerHigh),
+    ) {
+        DisableSelection {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = language?.takeIf { it.isNotBlank() } ?: "code",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                CopyButton(text = trimmed, contentDescription = "Copy code")
+            }
+        }
+        Text(
+            text = trimmed,
+            style = style,
+            color = colors.onSurface,
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+        )
+    }
 }
 
 // The default table renders every cell on one ellipsized line; wrap cell text instead.
+// Code blocks get a header with a copy button.
 private val wrappingTableComponents = markdownComponents(
+    codeFence = { model ->
+        MarkdownCodeFence(model.content, model.node, model.typography.code) { code, language, style ->
+            CopyableCodeBlock(code, language, style)
+        }
+    },
+    codeBlock = { model ->
+        MarkdownCodeBlock(model.content, model.node, model.typography.code) { code, language, style ->
+            CopyableCodeBlock(code, language, style)
+        }
+    },
     table = { model ->
         MarkdownTable(
             content = model.content,

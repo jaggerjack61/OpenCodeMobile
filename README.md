@@ -38,7 +38,7 @@ Chat with GLM, Kimi, DeepSeek, Qwen, MiniMax and more from your phone, in the sa
 
 ## Highlights
 
-- **Streaming chat** with Markdown rendering: headings, lists, tables, inline code and scrollable code blocks.
+- **Streaming chat** with Markdown rendering: headings, lists, tables, inline code and scrollable code blocks with a copy button. Long-press any message to select text.
 - **The live OpenCode Go model list**, fetched from OpenCode and cached on the device, so new and retired models show up without an app update. Search it, filter it by Free, Images or Thinking, or type any model ID.
 - **Free models**: models that OpenCode Go serves for free are tagged **FREE** and have their own filter. They keep working after you reach your plan's usage limit.
 - **Thinking effort per chat**: Auto, None, Minimal, Low, Medium, High, Extra high or Max, limited to the levels each model supports.
@@ -138,6 +138,7 @@ Signed APKs are published on the [Releases page](https://github.com/jaggerjack61
 
 | Version | Date | Highlights |
 | --- | --- | --- |
+| [v1.2.1](https://github.com/jaggerjack61/OpenCodeMobile/releases/tag/v1.2.1) | 2026-11-15 | Copy button on each code block, long-press to select text in any message |
 | [v1.2.0](https://github.com/jaggerjack61/OpenCodeMobile/releases/tag/v1.2.0) | 2026-11-15 | Copy button on your own prompts as well as on responses |
 | [v1.1.0](https://github.com/jaggerjack61/OpenCodeMobile/releases/tag/v1.1.0) | 2026-11-10 | Live model list with free models, new chats remember the last model and effort, refreshed OpenCode-style UI |
 | [v1.0.0](https://github.com/jaggerjack61/OpenCodeMobile/releases/tag/v1.0.0) | 2026-10-20 | First public release |
@@ -147,8 +148,8 @@ Signed APKs are published on the [Releases page](https://github.com/jaggerjack61
 Check the APK against the checksum in the release notes:
 
 ```bash
-shasum -a 256 OpenCodeMobile-v1.2.0.apk      # macOS / Linux
-certutil -hashfile OpenCodeMobile-v1.2.0.apk SHA256   # Windows
+shasum -a 256 OpenCodeMobile-v1.2.1.apk      # macOS / Linux
+certutil -hashfile OpenCodeMobile-v1.2.1.apk SHA256   # Windows
 ```
 
 Every official release is signed with the same certificate:
@@ -157,7 +158,7 @@ Every official release is signed with the same certificate:
 SHA-256: 5C:C4:36:06:50:9D:B8:5D:FB:80:14:95:83:BF:90:0B:EF:84:79:87:72:AC:4B:92:58:5C:E0:37:41:2A:11:A5
 ```
 
-To check it, run `apksigner verify --print-certs OpenCodeMobile-v1.2.0.apk` from the Android SDK build-tools.
+To check it, run `apksigner verify --print-certs OpenCodeMobile-v1.2.1.apk` from the Android SDK build-tools.
 
 ### Updating
 
@@ -176,6 +177,8 @@ Install a newer release over the existing app. Your conversations and settings a
 | Attach images or audio | Tap **+** then **Add images** (or audio). This only appears when the model accepts that media. |
 | Inspect reasoning or tool output | Tap a **Thought**, **Searched** or **Ran** row. |
 | Copy a prompt or response | Tap the copy icon under your message or the answer. |
+| Copy a code block | Tap the copy icon in the code block's header. |
+| Copy part of a message | Long-press the text, drag the handles, then tap **Copy**. |
 | Stop or retry | Tap ■ while streaming. If a request fails, tap **Try again**. |
 | Check plan usage | Tap the usage ring on the home screen, or ⋮ → **Usage** in a chat. |
 | Delete a chat | Tap ⋮ on the chat in the list, or ⋮ → **Delete chat** inside it. |
