@@ -642,6 +642,9 @@ private fun UserMessage(message: ChatMessage) {
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                 )
             }
+            Box(modifier = Modifier.padding(top = 2.dp)) {
+                CopyButton(text = message.content, contentDescription = "Copy prompt")
+            }
         }
     }
 }
@@ -894,9 +897,9 @@ private fun ErrorCard(error: String, canRetry: Boolean, onRetry: () -> Unit) {
     }
 }
 
+/** Copy icon (two stacked squares) that briefly turns into a check after copying [text]. */
 @Composable
-private fun MessageFooter(text: String, modelId: String?) {
-    val colors = MaterialTheme.colorScheme
+private fun CopyButton(text: String, contentDescription: String) {
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
     LaunchedEffect(copied) {
@@ -905,29 +908,35 @@ private fun MessageFooter(text: String, modelId: String?) {
             copied = false
         }
     }
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(OcShapes.control)
+            .clickable {
+                clipboard.setText(AnnotatedString(text))
+                copied = true
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
+            contentDescription = if (copied) "Copied" else contentDescription,
+            modifier = Modifier.size(15.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun MessageFooter(text: String, modelId: String?) {
+    val colors = MaterialTheme.colorScheme
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(OcShapes.control)
-                .clickable {
-                    clipboard.setText(AnnotatedString(text))
-                    copied = true
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = if (copied) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
-                contentDescription = if (copied) "Copied" else "Copy response",
-                modifier = Modifier.size(15.dp),
-                tint = colors.onSurfaceVariant,
-            )
-        }
+        CopyButton(text = text, contentDescription = "Copy response")
         if (modelId != null) {
             Spacer(Modifier.width(4.dp))
             Text(
